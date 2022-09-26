@@ -2,6 +2,8 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use filter_api::filter_server::{Filter, FilterServer};
 use filter_api::{FilterRequest, FilterResponse};
+use boa_engine::Context;
+
 
 pub mod filter_api {
     tonic::include_proto!("jsfilter");
@@ -17,6 +19,23 @@ impl Filter for JsFilter {
         request: Request<FilterRequest>,
     ) -> Result<Response<FilterResponse>, Status> {
         println!("Got a request from {:?}", request.remote_addr());
+
+        let js_code = "console.log('Hello World from a JS code string!')";
+
+        // Instantiate the execution context
+        let mut context = Context::default();
+    
+
+        match context.eval(js_code) {
+            Ok(res) => {
+                println!("{}", res.to_string(&mut context).unwrap());
+            }
+            Err(e) => {
+                // Pretty print the error
+                eprintln!("Uncaught {}", e.display());
+            }
+        };
+        
 
         let reply = filter_api::FilterResponse {
             payload: request.into_inner().payload,
