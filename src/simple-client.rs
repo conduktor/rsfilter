@@ -7,16 +7,25 @@ pub mod filter_api {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut client = FilterClient::connect("http://[::1]:50051").await?;
+    let mut client = FilterClient::connect("http://127.0.0.1:50051").await?;
 
     let request = tonic::Request::new(FilterRequest {
-        js: "js function".into(),
-        payload: "awesome payload".into(),
+        js: "(payload) => payload.a==='x'".into(),
+        payload: "{\"a\":\"x\"}".into(),
     });
 
     let response = client.filter(request).await?;
 
     println!("RESPONSE={:?}", response);
+
+    let request2 = tonic::Request::new(FilterRequest {
+        js: "(payload) => payload.a==='x'".into(),
+        payload: "{\"a\":\"y\"}".into(),
+    });
+
+    let response2 = client.filter(request2).await?;
+
+    println!("RESPONSE={:?}", response2);
 
     Ok(())
 }

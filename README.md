@@ -10,6 +10,7 @@
 ## JS interpreter
 
 * https://github.com/boa-dev/boa
+* https://github.com/HiRoFa/quickjs_es_runtime
 
 ## Grpc 
 * https://github.com/hyperium/tonic
