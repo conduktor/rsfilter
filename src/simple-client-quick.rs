@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = FilterClient::connect("http://127.0.0.1:50051").await?;
 
     let request = tonic::Request::new(FilterRequest {
-        js: "(payload) => payload.a==='x'".into(),
+        js: "function filter(payload){ return payload.a==='x'}".into(),
         payload: "{\"a\":\"x\"}".into(),
     });
 
@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("RESPONSE={:?}", response);
 
     let request2 = tonic::Request::new(FilterRequest {
-        js: "(payload) => payload.a==='x'".into(),
+        js: "function filter(payload){ return payload.a==='x'}".into(),
         payload: "{\"a\":\"y\"}".into(),
     });
 
