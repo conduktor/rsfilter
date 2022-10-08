@@ -47,14 +47,16 @@ Response time histogram:
 ```
 
 
-## Naive Quick bench  (non release build)
+## Naive Quick bench  
 
 ### don't reuse filter
+
+#### Non release build 10k message
 ```sh 
 ghz --insecure --proto ./proto/js-filter.proto -c 10 -n 10000 --rps 10000  --call jsfilter.Filter.filter -d '{"js":"function filter(payload){ return payload.a===\'x\'}","payload":"{\\"a\\":\\"x\\"}"}' 127.0.0.1:50051
 
 ```
-
+ #### Non release build 10k
 ```sh
 Summary:
   Count:        10000
@@ -78,10 +80,41 @@ Response time histogram:
   20.538 [9]    |
 
 ```
+#### release build 100k message
 
+```sh 
+ghz --insecure --proto ./proto/js-filter.proto -c 10 -n 100000 --rps 20000  --call jsfilter.Filter.filter -d '{"js":"function filter(payload){ return payload.a===\'x\'}","payload":"{\\"a\\":\\"x\\"}"}' 127.0.0.1:50051
+
+```
+
+```sh
+
+Summary:
+  Count:        100000
+  Total:        15.37 s
+  Slowest:      27.15 ms
+  Fastest:      0.17 ms
+  Average:      1.14 ms
+  Requests/sec: 6507.93
+
+Response time histogram:
+  0.166  [1]     |
+  2.865  [99660] |∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  5.563  [268]   |
+  8.262  [28]    |
+  10.961 [22]    |
+  13.659 [1]     |
+  16.358 [3]     |
+  19.057 [7]     |
+  21.756 [0]     |
+  24.454 [0]     |
+  27.153 [10]    |
+```
 
 
 ### reuse filter
+
+#### non release build 10k message
 ```sh 
 
 cargo run --bin init-quick-js-bench
@@ -111,5 +144,37 @@ Response time histogram:
   16.837 [78]   |∎
   18.645 [23]   |
   20.453 [7]    |
+
+```
+#### release build
+```sh 
+
+cargo run --bin init-quick-js-bench
+
+ghz --insecure --proto ./proto/js-filter.proto -c 10 -n 100000 --rps 20000  --call jsfilter.Filter.isMatchingFilter -d '{"id":"1","payload":"{\\"a\\":\\"x\\"}"}' 127.0.0.1:50051
+
+```
+
+```sh
+Summary:
+  Count:        100000
+  Total:        13.31 s
+  Slowest:      7.71 ms
+  Fastest:      0.13 ms
+  Average:      0.95 ms
+  Requests/sec: 7512.75
+
+Response time histogram:
+  0.133 [1]     |
+  0.890 [48446] |∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  1.647 [47016] |∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  2.405 [4160]  |∎∎∎
+  3.162 [293]   |
+  3.920 [69]    |
+  4.677 [9]     |
+  5.434 [4]     |
+  6.192 [1]     |
+  6.949 [0]     |
+  7.706 [1]     |
 
 ```
