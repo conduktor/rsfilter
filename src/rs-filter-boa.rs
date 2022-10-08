@@ -4,7 +4,7 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use boa_engine::Context;
 use filter_api::filter_server::{Filter, FilterServer};
-use filter_api::{FilterRequest, FilterResponse};
+use filter_api::{FilterRequest, FilterResponse, CreateFilterRequest, CreateFilterResponse, IsMatchingFilterRequest, IsMatchingFilterResponse};
 
 pub mod filter_api {
     tonic::include_proto!("jsfilter");
@@ -55,6 +55,17 @@ impl Filter for JsFilter {
             }
         };
     }
+
+    async fn create_filter(
+        &self,
+        request: Request<CreateFilterRequest>,
+    ) -> Result<Response<CreateFilterResponse>, Status> { unimplemented!(); }
+
+    async fn is_matching_filter(
+        &self, 
+        request: Request<IsMatchingFilterRequest>
+    ) -> Result<Response<IsMatchingFilterResponse>, Status> { unimplemented!(); }
+
 }
 
 #[tokio::main]

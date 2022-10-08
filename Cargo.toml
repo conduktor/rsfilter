@@ -23,6 +23,10 @@ path = "src/simple-client.rs"
 name = "simple-client-quick"
 path = "src/simple-client.rs"
 
+[[bin]]
+name = "init-quick-js-bench"
+path = "src/init-quick-js-bench.rs"
+
 
 [dependencies]
 log = "0.4"

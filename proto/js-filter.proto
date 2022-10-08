@@ -9,6 +9,8 @@ package jsfilter;
 
 service Filter {
   rpc filter (FilterRequest) returns (FilterResponse) {}
+  rpc createFilter (CreateFilterRequest) returns (CreateFilterResponse) {}
+  rpc isMatchingFilter (IsMatchingFilterRequest) returns (IsMatchingFilterResponse) {}
 }
 
 // The request message containing the user's name.
@@ -20,4 +22,21 @@ message FilterRequest {
 // The response message containing the greetings
 message FilterResponse {
   string payload = 1;
+}
+
+message CreateFilterRequest {
+  string js = 1;
+}
+
+message CreateFilterResponse {
+  int32 id = 1;
+}
+
+message IsMatchingFilterRequest {
+  int32 id = 1;
+  string payload = 2;
+}
+
+message IsMatchingFilterResponse {
+  bool isMatching = 1;
 }

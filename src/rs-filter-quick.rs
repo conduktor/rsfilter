@@ -4,7 +4,7 @@ use log::{debug, error, info};
 use tonic::{transport::Server, Request, Response, Status};
 
 use filter_api::filter_server::{Filter, FilterServer};
-use filter_api::{FilterRequest, FilterResponse};
+use filter_api::{FilterRequest, FilterResponse, CreateFilterRequest, CreateFilterResponse, IsMatchingFilterRequest, IsMatchingFilterResponse};
 
 use hirofa_utils::js_utils::{
     adapters::JsRealmAdapter,
@@ -44,22 +44,71 @@ impl Filter for JsFilter {
 
         match filter_result {
             Ok(res) => {
-                // println!("{}", res.to_string(&mut context).unwrap());
                 let reply = filter_api::FilterResponse {
                     payload: res.to_string(),
                 };
                 return Ok(Response::new(reply));
             }
             Err(e) => {
-                // Pretty print the error
                 error!("Uncaught {}", e);
-                let reply = filter_api::FilterResponse {
-                    payload: "💥 ERROR SYSTEM 💥".into(),
-                };
-                return Ok(Response::new(reply));
+                return Err(Status::internal(e));
             }
         };
     }
+
+
+
+    async fn create_filter(
+        &self,
+        request: Request<CreateFilterRequest>,
+    ) -> Result<Response<CreateFilterResponse>, Status> {
+        debug!("Request {:?}", request);
+
+            match eval_function(request.get_ref().js.clone(), &self.quick_js_rt.clone()) {
+                Ok(function_id) => {
+                    let reply = CreateFilterResponse {
+                        id: function_id,
+                    };
+                    return Ok(Response::new(reply));
+                }
+                Err(e) => {
+                    error!("Uncaught {}", e);
+                    return Err(Status::internal(e));
+                }
+            };
+            
+     }
+
+    async fn is_matching_filter(
+        &self, 
+        request: Request<IsMatchingFilterRequest>
+    ) -> Result<Response<IsMatchingFilterResponse>, Status> { 
+
+        let filter_result = run_function(
+            self.quick_js_rt.clone(),
+            request.get_ref().id.clone(),
+            request.get_ref().payload.clone(),
+        )
+        .await;
+
+        match filter_result {
+            Ok(res) => {
+                // println!("{}", res.to_string(&mut context).unwrap());
+                let reply = IsMatchingFilterResponse {
+                    is_matching: res,
+                };
+                return Ok(Response::new(reply));
+            }
+
+            Err(e) => {
+                error!("Uncaught {}", e);
+                return Err(Status::internal(e));
+            }
+        };
+
+     }
+
+
 }
 
 #[tokio::main]
