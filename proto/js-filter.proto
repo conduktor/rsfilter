@@ -11,6 +11,7 @@ service Filter {
   rpc filter (FilterRequest) returns (FilterResponse) {}
   rpc createFilter (CreateFilterRequest) returns (CreateFilterResponse) {}
   rpc isMatchingFilter (IsMatchingFilterRequest) returns (IsMatchingFilterResponse) {}
+  rpc continuousFilter (stream IsMatchingFilterRequest) returns (stream IsMatchingFilterResponse) {}
 }
 
 // The request message containing the user's name.

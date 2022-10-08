@@ -1,3 +1,7 @@
+use futures::Stream;
+use std::pin::Pin;
+use std::sync::Arc;
+
 use boa_engine::property::Attribute;
 use log::{debug, info};
 use tonic::{transport::Server, Request, Response, Status};
@@ -65,6 +69,12 @@ impl Filter for JsFilter {
         &self, 
         request: Request<IsMatchingFilterRequest>
     ) -> Result<Response<IsMatchingFilterResponse>, Status> { unimplemented!(); }
+ 
+    type continuousFilterStream= Pin<Box<dyn Stream<Item = Result<IsMatchingFilterResponse, Status>>  + Send  + 'static>>;
+    async fn continuous_filter(
+        &self, 
+        request: Request<tonic::Streaming<IsMatchingFilterRequest>>
+     ) -> Result<Response<Self::continuousFilterStream>, Status> { unimplemented!(); }
 
 }
 

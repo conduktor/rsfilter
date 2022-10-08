@@ -1,3 +1,5 @@
+use futures::Stream;
+use std::pin::Pin;
 use std::sync::Arc;
 
 use log::{debug, error, info};
@@ -23,6 +25,7 @@ pub mod filter_api {
 pub struct JsFilter {
     quick_js_rt: Arc<QuickJsRuntimeFacade>,
 }
+
 
 #[tonic::async_trait]
 impl Filter for JsFilter {
@@ -108,6 +111,12 @@ impl Filter for JsFilter {
 
      }
 
+     type continuousFilterStream= Pin<Box<dyn Stream<Item = Result<IsMatchingFilterResponse, Status>>  + Send  + 'static>>;
+
+     async fn continuous_filter(
+        &self, 
+        request: Request<tonic::Streaming<IsMatchingFilterRequest>>
+     ) -> Result<Response<Self::continuousFilterStream>, Status> { unimplemented!(); }
 
 }
 
