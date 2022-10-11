@@ -1,10 +1,14 @@
+use futures::Stream;
+use std::pin::Pin;
+use std::sync::Arc;
+
 use boa_engine::property::Attribute;
+use log::{debug, info};
 use tonic::{transport::Server, Request, Response, Status};
 
-use filter_api::filter_server::{Filter, FilterServer};
-use filter_api::{FilterRequest, FilterResponse};
 use boa_engine::Context;
-
+use filter_api::filter_server::{Filter, FilterServer};
+use filter_api::{FilterRequest, FilterResponse, CreateFilterRequest, CreateFilterResponse, IsMatchingFilterRequest, IsMatchingFilterResponse};
 
 pub mod filter_api {
     tonic::include_proto!("jsfilter");
@@ -15,21 +19,27 @@ pub struct JsFilter {}
 
 #[tonic::async_trait]
 impl Filter for JsFilter {
-   async fn filter(
+    async fn filter(
         &self,
         request: Request<FilterRequest>,
     ) -> Result<Response<FilterResponse>, Status> {
-        // println!("Got a request from {:?}", request.remote_addr());
+        debug!("Got a request from {:?}", request.remote_addr());
 
         // Instantiate the execution context
         let mut context = Context::default();
-        context.register_global_property("json_value", request.get_ref().payload.clone(), Attribute::READONLY);
-        let js_code = format!(r#"
+        context.register_global_property(
+            "json_value",
+            request.get_ref().payload.clone(),
+            Attribute::READONLY,
+        );
+        let js_code = format!(
+            r#"
             let filter = {};
             let value = JSON.parse(json_value);
             filter(value);
-        "#,request.get_ref().js);
-    
+        "#,
+            request.get_ref().js
+        );
 
         match context.eval(js_code) {
             Ok(res) => {
@@ -37,32 +47,48 @@ impl Filter for JsFilter {
                 let reply = filter_api::FilterResponse {
                     payload: res.to_string(&mut context).unwrap().to_string(),
                 };
-                return Ok(Response::new(reply))
+                return Ok(Response::new(reply));
             }
-            Err(e) => {
+            Err(_) => {
                 // Pretty print the error
                 // eprintln!("Uncaught {}", e.display());
                 let reply = filter_api::FilterResponse {
                     payload: "💥 ERROR SYSTEM 💥".into(),
                 };
-                return Ok(Response::new(reply))
+                return Ok(Response::new(reply));
             }
         };
-        
-
-        
     }
+
+    async fn create_filter(
+        &self,
+        request: Request<CreateFilterRequest>,
+    ) -> Result<Response<CreateFilterResponse>, Status> { unimplemented!(); }
+
+    async fn is_matching_filter(
+        &self, 
+        request: Request<IsMatchingFilterRequest>
+    ) -> Result<Response<IsMatchingFilterResponse>, Status> { unimplemented!(); }
+ 
+    type continuousFilterStream= Pin<Box<dyn Stream<Item = Result<IsMatchingFilterResponse, Status>>  + Send  + 'static>>;
+    async fn continuous_filter(
+        &self, 
+        request: Request<tonic::Streaming<IsMatchingFilterRequest>>
+     ) -> Result<Response<Self::continuousFilterStream>, Status> { unimplemented!(); }
+
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "127.0.0.1:50051".parse().unwrap();
-    let greeter = JsFilter::default();
+    simple_logger::init_with_level(log::Level::Info).unwrap();
 
-    println!("JsFilterServer listening on {}", addr);
+    let addr = "127.0.0.1:50051".parse().unwrap();
+    let js_filter_server = JsFilter::default();
+
+    info!("JsFilterServer listening on {}", addr);
 
     Server::builder()
-        .add_service(FilterServer::new(greeter))
+        .add_service(FilterServer::new(js_filter_server))
         .serve(addr)
         .await?;
 
@@ -71,8 +97,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Filter,JsFilter, filter_api::{FilterRequest, FilterResponse}};
-
+    use crate::{
+        filter_api::{FilterRequest, FilterResponse},
+        Filter, JsFilter,
+    };
 
     #[tokio::test]
     async fn test_filter() {
@@ -83,14 +111,14 @@ mod tests {
         });
         let res = filter.filter(request).await;
 
-        let expected = FilterResponse{
-            payload: "{\"a\":\"x\"}".into(),
+        let expected = FilterResponse {
+            payload: "true".into(),
         };
 
         assert_eq!(res.unwrap().get_ref().payload, expected.payload);
     }
-  
- #[tokio::test]
+
+    #[tokio::test]
     async fn test_not_filter() {
         let filter = JsFilter::default();
         let request = tonic::Request::new(FilterRequest {
@@ -99,7 +127,7 @@ mod tests {
         });
         let res = filter.filter(request).await;
 
-        let expected = FilterResponse{
+        let expected = FilterResponse {
             payload: "false".into(),
         };
 
