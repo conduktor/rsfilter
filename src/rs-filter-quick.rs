@@ -6,7 +6,12 @@ use log::{debug, error, info};
 use tonic::{transport::Server, Request, Response, Status};
 
 use filter_api::filter_server::{Filter, FilterServer};
-use filter_api::{FilterRequest, FilterResponse, CreateFilterRequest, CreateFilterResponse, IsMatchingFilterRequest, IsMatchingFilterResponse};
+use filter_api::{
+    CreateFilterRequest, CreateFilterResponse, FilterRequest, FilterResponse,
+    IsMatchingFilterRequest, IsMatchingFilterResponse,
+};
+
+use rand::seq::SliceRandom;
 
 use hirofa_utils::js_utils::{
     adapters::JsRealmAdapter,
@@ -23,9 +28,8 @@ pub mod filter_api {
 }
 
 pub struct JsFilter {
-    quick_js_rt: Arc<QuickJsRuntimeFacade>,
+    quick_js_rts: Vec<Arc<QuickJsRuntimeFacade>>,
 }
-
 
 #[tonic::async_trait]
 impl Filter for JsFilter {
@@ -35,15 +39,16 @@ impl Filter for JsFilter {
     ) -> Result<Response<FilterResponse>, Status> {
         debug!("Got a request from {:?}", request.remote_addr());
 
-        let function_id =
-            eval_function(request.get_ref().js.clone(), &self.quick_js_rt.clone()).unwrap();
+        let rt = self
+            .quick_js_rts
+            .choose(&mut rand::thread_rng())
+            .expect("unexpected empty runtime vector")
+            .clone();
 
-        let filter_result = run_function(
-            self.quick_js_rt.clone(),
-            function_id,
-            request.get_ref().payload.clone(),
-        )
-        .await;
+        let function_id = eval_function(request.get_ref().js.clone(), &rt.clone()).unwrap();
+
+        let filter_result =
+            run_function(rt.clone(), function_id, request.get_ref().payload.clone()).await;
 
         match filter_result {
             Ok(res) => {
@@ -59,36 +64,46 @@ impl Filter for JsFilter {
         };
     }
 
-
-
     async fn create_filter(
         &self,
         request: Request<CreateFilterRequest>,
     ) -> Result<Response<CreateFilterResponse>, Status> {
         debug!("Request {:?}", request);
 
-            match eval_function(request.get_ref().js.clone(), &self.quick_js_rt.clone()) {
-                Ok(function_id) => {
-                    let reply = CreateFilterResponse {
-                        id: function_id,
-                    };
-                    return Ok(Response::new(reply));
-                }
-                Err(e) => {
-                    error!("Uncaught {}", e);
-                    return Err(Status::internal(e));
-                }
-            };
-            
-     }
+        info!("runtime count: {}", self.quick_js_rts.len());
+
+        self.quick_js_rts
+            .iter()
+            .map(
+                |rt| match eval_function(request.get_ref().js.clone(), &rt.clone()) {
+                    Ok(function_id) => {
+                        info!("created filter with id {}", function_id);
+                        let reply = CreateFilterResponse { id: function_id };
+                        return Ok(Response::new(reply));
+                    }
+                    Err(e) => {
+                        error!("Uncaught {}", e);
+                        return Err(Status::internal(e));
+                    }
+                },
+            )
+            .collect::<Vec<Result<Response<CreateFilterResponse>, Status>>>()
+            .pop()
+            .unwrap()
+    }
 
     async fn is_matching_filter(
-        &self, 
-        request: Request<IsMatchingFilterRequest>
-    ) -> Result<Response<IsMatchingFilterResponse>, Status> { 
+        &self,
+        request: Request<IsMatchingFilterRequest>,
+    ) -> Result<Response<IsMatchingFilterResponse>, Status> {
+        let rt = self
+            .quick_js_rts
+            .choose(&mut rand::thread_rng())
+            .expect("unexpected empty runtime vector")
+            .clone();
 
         let filter_result = run_function(
-            self.quick_js_rt.clone(),
+            rt,
             request.get_ref().id.clone(),
             request.get_ref().payload.clone(),
         )
@@ -97,9 +112,7 @@ impl Filter for JsFilter {
         match filter_result {
             Ok(res) => {
                 // println!("{}", res.to_string(&mut context).unwrap());
-                let reply = IsMatchingFilterResponse {
-                    is_matching: res,
-                };
+                let reply = IsMatchingFilterResponse { is_matching: res };
                 return Ok(Response::new(reply));
             }
 
@@ -108,16 +121,17 @@ impl Filter for JsFilter {
                 return Err(Status::internal(e));
             }
         };
+    }
 
-     }
+    type continuousFilterStream =
+        Pin<Box<dyn Stream<Item = Result<IsMatchingFilterResponse, Status>> + Send + 'static>>;
 
-     type continuousFilterStream= Pin<Box<dyn Stream<Item = Result<IsMatchingFilterResponse, Status>>  + Send  + 'static>>;
-
-     async fn continuous_filter(
-        &self, 
-        request: Request<tonic::Streaming<IsMatchingFilterRequest>>
-     ) -> Result<Response<Self::continuousFilterStream>, Status> { unimplemented!(); }
-
+    async fn continuous_filter(
+        &self,
+        request: Request<tonic::Streaming<IsMatchingFilterRequest>>,
+    ) -> Result<Response<Self::continuousFilterStream>, Status> {
+        unimplemented!();
+    }
 }
 
 #[tokio::main]
@@ -125,10 +139,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     simple_logger::init_with_level(log::Level::Info).unwrap();
 
     let addr = "127.0.0.1:50051".parse().unwrap();
-    let qjs_rt = Arc::new(QuickJsRuntimeBuilder::new().js_build());
+    let qjs_rt_1 = Arc::new(QuickJsRuntimeBuilder::new().js_build());
+    let qjs_rt_2 = Arc::new(QuickJsRuntimeBuilder::new().js_build());
+    let qjs_rt_3 = Arc::new(QuickJsRuntimeBuilder::new().js_build());
 
     let js_filter_server = JsFilter {
-        quick_js_rt: qjs_rt,
+        quick_js_rts: vec![qjs_rt_1, qjs_rt_2, qjs_rt_3],
     };
 
     info!("JsFilterServer listening on {}", addr);
