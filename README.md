@@ -154,7 +154,7 @@ cargo run --bin init-quick-js-bench
 ghz --insecure --proto ./proto/js-filter.proto -c 10 -n 100000 --rps 20000  --call jsfilter.Filter.isMatchingFilter -d '{"id":"1","payload":"{\\"a\\":\\"x\\"}"}' 127.0.0.1:50051
 
 ```
-
+ * with one rt
 ```sh
 Summary:
   Count:        100000
@@ -178,3 +178,27 @@ Response time histogram:
   7.706 [1]     |
 
 ```
+* with 3 rt
+  ```sh
+  Summary:
+  Count:        100000
+  Total:        7.84 s
+  Slowest:      7.59 ms
+  Fastest:      0.13 ms
+  Average:      0.49 ms
+  Requests/sec: 12749.92
+
+Response time histogram:
+  0.133 [1]     |
+  0.879 [94943] |∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎∎
+  1.624 [4584]  |∎∎
+  2.369 [313]   |
+  3.115 [72]    |
+  3.860 [35]    |
+  4.605 [5]     |
+  5.350 [29]    |
+  6.096 [10]    |
+  6.841 [7]     |
+  7.586 [1]     |
+
+  ```

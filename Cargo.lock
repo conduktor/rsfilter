@@ -651,6 +651,7 @@ dependencies = [
  "log",
  "prost",
  "quickjs_runtime",
+ "rand 0.8.5",
  "simple_logger",
  "tokio",
  "tonic",
