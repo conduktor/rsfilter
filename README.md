@@ -179,7 +179,8 @@ Response time histogram:
 
 ```
 * with 3 rt
-  ```sh
+
+```sh
   Summary:
   Count:        100000
   Total:        7.84 s
@@ -200,5 +201,4 @@ Response time histogram:
   6.096 [10]    |
   6.841 [7]     |
   7.586 [1]     |
-
-  ```
+```
