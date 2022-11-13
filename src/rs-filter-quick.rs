@@ -201,10 +201,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_filter() {
-        let qjs_rt = Arc::new(QuickJsRuntimeBuilder::new().js_build());
+        let qjs_rt = vec![Arc::new(QuickJsRuntimeBuilder::new().js_build())];
 
         let filter = JsFilter {
-            quick_js_rt: qjs_rt,
+            quick_js_rts: qjs_rt,
         };
 
         let request = tonic::Request::new(FilterRequest {
@@ -222,10 +222,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_not_filter() {
-        let qjs_rt = Arc::new(QuickJsRuntimeBuilder::new().js_build());
+        let qjs_rt = vec![Arc::new(QuickJsRuntimeBuilder::new().js_build())];
 
         let filter = JsFilter {
-            quick_js_rt: qjs_rt,
+            quick_js_rts: qjs_rt,
         };
 
         let request = tonic::Request::new(FilterRequest {

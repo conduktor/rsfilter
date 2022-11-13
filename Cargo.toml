@@ -30,7 +30,7 @@ path = "src/init-quick-js-bench.rs"
 
 [dependencies]
 log = "0.4"
-simple_logger = "2.3.0"
+simple_logger = "4.0.0"
 tonic = "0.8"
 futures = { version = "0.3", default-features = false, features = ["alloc"] }
 prost = "0.11"
