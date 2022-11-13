@@ -33,6 +33,7 @@ boa_engine = "0.16.0"
 futures = { version = "0.3", default-features = false, features = ["alloc"] }
 hirofa_utils = "0.5"
 log = "0.4"
+num_cpus = "1.0"
 prost = "0.11"
 quickjs_runtime = "0.8"
 rand = "0.8.5"

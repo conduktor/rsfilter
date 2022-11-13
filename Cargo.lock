@@ -649,6 +649,7 @@ dependencies = [
  "futures",
  "hirofa_utils",
  "log",
+ "num_cpus",
  "prost",
  "quickjs_runtime",
  "rand 0.8.5",
