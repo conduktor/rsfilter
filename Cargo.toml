@@ -30,6 +30,7 @@ path = "src/init-quick-js-bench.rs"
 
 [dependencies]
 boa_engine = "0.16.0"
+config = "0.13.1"
 futures = { version = "0.3", default-features = false, features = ["alloc"] }
 hirofa_utils = "0.5"
 log = "0.4"
