@@ -1,0 +1,29 @@
+on:
+  workflow_call:
+
+jobs:
+  rust_quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Package Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - name: Format Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Linting Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
