@@ -139,8 +139,8 @@ impl Filter for JsFilter {
 
 fn create_rts() -> Vec<Arc<QuickJsRuntimeFacade>> {
     let mut rts = Vec::new();
-   val number_of_runtime = num_cpus::get()/2;
-    for _ in 0..() {
+    let number_of_runtime = num_cpus::get()/2;
+    for _ in 0..number_of_runtime {
         let rt = QuickJsRuntimeBuilder::new()
             .js_build();
         rts.push(Arc::new(rt));
