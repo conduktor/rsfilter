@@ -29,16 +29,19 @@ path = "src/init-quick-js-bench.rs"
 
 
 [dependencies]
-log = "0.4"
-simple_logger = "4.0.0"
-tonic = "0.8"
-futures = { version = "0.3", default-features = false, features = ["alloc"] }
-prost = "0.11"
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 boa_engine = "0.16.0"
+config = "0.13.1"
+futures = { version = "0.3", default-features = false, features = ["alloc"] }
 hirofa_utils = "0.5"
+log = "0.4"
+num_cpus = "1.0"
+prost = "0.11"
 quickjs_runtime = "0.8"
 rand = "0.8.5"
+simple_logger = "4.0.0"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tonic = "0.8"
+
 
 [build-dependencies]
 tonic-build = "0.8"

@@ -2,6 +2,8 @@ use futures::Stream;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use num_cpus;
+
 use log::{debug, error, info};
 use tonic::{transport::Server, Request, Response, Status};
 
@@ -134,17 +136,23 @@ impl Filter for JsFilter {
     }
 }
 
+fn create_rts() -> Vec<Arc<QuickJsRuntimeFacade>> {
+    let mut rts = Vec::new();
+    let number_of_runtime = num_cpus::get() / 2;
+    for _ in 0..number_of_runtime {
+        let rt = QuickJsRuntimeBuilder::new().js_build();
+        rts.push(Arc::new(rt));
+    }
+    rts
+}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     simple_logger::init_with_level(log::Level::Info).unwrap();
 
     let addr = "127.0.0.1:50051".parse().unwrap();
-    let qjs_rt_1 = Arc::new(QuickJsRuntimeBuilder::new().js_build());
-    let qjs_rt_2 = Arc::new(QuickJsRuntimeBuilder::new().js_build());
-    let qjs_rt_3 = Arc::new(QuickJsRuntimeBuilder::new().js_build());
 
     let js_filter_server = JsFilter {
-        quick_js_rts: vec![qjs_rt_1, qjs_rt_2, qjs_rt_3],
+        quick_js_rts: create_rts(),
     };
 
     info!("JsFilterServer listening on {}", addr);
